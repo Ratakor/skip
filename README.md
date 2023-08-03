@@ -1,15 +1,9 @@
-skiplist.c
-==========
-A C99 implementation of [skiplists](https://wikipedia.org/wiki/Skip_list)
+Skip
+====
+A C99 implementation of [skip lists](https://wikipedia.org/wiki/Skip_list)
 
 Usage
 -----
-Change Key and Val type in skiplist.h according to your key/val types and
-that's it.
-
-Notes
------
-sl_create() and sl_search() return NULL on error.
-sl_insert() and sl_remove() return -1 on error.
-Only the .val field of a Node could be modified manually otherwise use
-provided functions.
+Define `SKIP_DOUBLY` to use doubly skip lists instead of singly skip lists.
+Change `SkipKey` and `SkipVal` types in skip.h according to your key/val types,
+include skip.c and skip.h to your project, that's it.
