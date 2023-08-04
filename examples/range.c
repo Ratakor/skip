@@ -11,9 +11,9 @@ skip_delrange_slow(SkipList *list, SkipKey from, SkipKey to)
 	size_t n;
 
 	node = skip_approx(list, from);
-	for (n = 0; node && skip_key(node) < to; n++) {
-		next = skip_next(node);
-		skip_delete(list, skip_key(node));
+	for (n = 0; node && node->key < to; n++) {
+		next = node->next;
+		skip_delete(list, node->key);
 		node = next;
 	}
 
@@ -25,8 +25,8 @@ skip_print(SkipList *list)
 {
 	SkipNode *node;
 
-	for (node = skip_first(list); node; node = skip_next(node))
-		printf("%d[%d]->", skip_key(node), skip_val(node));
+	for (node = skip_first(list); node; node = node->next)
+		printf("%d[%d]->", node->key, node->val);
 	puts("NULL");
 }
 
@@ -65,13 +65,13 @@ main(void)
 
 	/* Normally we should null check all of this */
 	node = skip_approx(list, 37);
-	printf("node with key ~= 37: %d[%d]\n", skip_key(node), skip_val(node));
+	printf("node with key ~= 37: %d[%d]\n", node->key, node->val);
 #ifdef SKIP_DOUBLY
-	node = skip_prev(node);
-	printf("prev: %d[%d]\n", skip_key(node), skip_val(node));
+	node = node->prev;
+	printf("prev: %d[%d]\n", node->key, node->val);
 #endif
-	printf("set val %d to node with key %d\n", 42, skip_key(node));
-	skip_setval(node, 42);
+	printf("set val %d to node with key %d\n", 42, node->val);
+	node->val = 42;
 	skip_print(list);
 
 	skip_destroy(list);
