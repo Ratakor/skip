@@ -7,13 +7,14 @@
 #define MAXLVL    32
 #define THRESHOLD RAND_MAX * 0.25
 
+typedef struct _SkipNode _SkipNode;
 struct _SkipNode {
 	SkipKey key;
 	SkipVal val;
 #ifdef SKIP_DOUBLY
-	struct _SkipNode *bwd;
+	_SkipNode *bwd;
 #endif /* SKIP_DOUBLY */
-	struct _SkipNode *fwd[];
+	_SkipNode *fwd[];
 };
 
 struct SkipList {
@@ -45,7 +46,7 @@ skip_create(void)
 void
 skip_destroy(SkipList *list)
 {
-	struct _SkipNode *node, *next;
+	_SkipNode *node, *next;
 
 	for (node = list->hdr; node; node = next) {
 		next = node->fwd[0];
@@ -54,19 +55,30 @@ skip_destroy(SkipList *list)
 	free(list);
 }
 
+static inline _SkipNode *
+_skip_search(SkipList *list, SkipKey key, _SkipNode **update)
+{
+	_SkipNode *node;
+	int lvl;
+
+	node = list->hdr;
+	for (lvl = list->lvl - 1; lvl >= 0; lvl--) {
+		while (node->fwd[lvl] && node->fwd[lvl]->key < key)
+			node = node->fwd[lvl];
+		if (update)
+			update[lvl] = node;
+	}
+
+	return node->fwd[0];
+}
+
 SkipNode *
 skip_insert(SkipList *list, SkipKey key, SkipVal val)
 {
-	struct _SkipNode *update[MAXLVL], *node = list->hdr;
+	_SkipNode *update[MAXLVL], *node;
 	int lvl, i;
 
-	for (i = list->lvl - 1; i >= 0; i--) {
-		while (node->fwd[i] && node->fwd[i]->key < key)
-			node = node->fwd[i];
-		update[i] = node;
-	}
-
-	node = node->fwd[0];
+	node = _skip_search(list, key, update);
 	if (node && node->key == key) {
 		node->val = val;
 		return (SkipNode *)node;
@@ -107,15 +119,12 @@ skip_insert(SkipList *list, SkipKey key, SkipVal val)
 }
 
 static inline void
-skip_delnode(SkipList *list, struct _SkipNode *node, struct _SkipNode **update)
+_skip_delnode(SkipList *list, _SkipNode *node, _SkipNode **update)
 {
-	int i;
+	int lvl;
 
-	for (i = 0; i < list->lvl; i++) {
-		if (update[i]->fwd[i] != node)
-			break;
-		update[i]->fwd[i] = node->fwd[i];
-	}
+	for (lvl = 0; lvl < list->lvl && update[lvl]->fwd[lvl] == node; lvl++)
+		update[lvl]->fwd[lvl] = node->fwd[lvl];
 
 #ifdef SKIP_DOUBLY
 	if (node->fwd[0])
@@ -133,18 +142,11 @@ skip_delnode(SkipList *list, struct _SkipNode *node, struct _SkipNode **update)
 bool
 skip_delete(SkipList *list, SkipKey key)
 {
-	struct _SkipNode *update[MAXLVL], *node = list->hdr;
-	int i;
+	_SkipNode *update[MAXLVL], *node;
 
-	for (i = list->lvl - 1; i >= 0; i--) {
-		while (node->fwd[i] && node->fwd[i]->key < key)
-			node = node->fwd[i];
-		update[i] = node;
-	}
-
-	node = node->fwd[0];
+	node = _skip_search(list, key, update);
 	if (node && node->key == key) {
-		skip_delnode(list, node, update);
+		_skip_delnode(list, node, update);
 		return true;
 	}
 
@@ -154,20 +156,13 @@ skip_delete(SkipList *list, SkipKey key)
 size_t
 skip_delrange(SkipList *list, SkipKey from, SkipKey to)
 {
-	struct _SkipNode *update[MAXLVL], *node = list->hdr, *next;
+	_SkipNode *update[MAXLVL], *node, *next;
 	size_t n;
-	int i;
 
-	for (i = list->lvl - 1; i >= 0; i--) {
-		while (node->fwd[i] && node->fwd[i]->key < from)
-			node = node->fwd[i];
-		update[i] = node;
-	}
-
-	node = node->fwd[0];
+	node = _skip_search(list, from, update);
 	for (n = 0; node && node->key < to; n++) {
 		next = node->fwd[0];
-		skip_delnode(list, node, update);
+		_skip_delnode(list, node, update);
 		node = next;
 	}
 
@@ -177,9 +172,9 @@ skip_delrange(SkipList *list, SkipKey from, SkipKey to)
 SkipNode *
 skip_search(SkipList *list, SkipKey key)
 {
-	struct _SkipNode *node;
+	_SkipNode *node;
 
-	node = (struct _SkipNode *)skip_approx(list, key);
+	node = _skip_search(list, key, NULL);
 	if (node && node->key == key)
 		return (SkipNode *)node;
 
@@ -189,15 +184,7 @@ skip_search(SkipList *list, SkipKey key)
 SkipNode *
 skip_approx(SkipList *list, SkipKey key)
 {
-	struct _SkipNode *node = list->hdr;
-	int i;
-
-	for (i = list->lvl - 1; i >= 0; i--) {
-		while (node->fwd[i] && node->fwd[i]->key < key)
-			node = node->fwd[i];
-	}
-
-	return (SkipNode *)node->fwd[0];
+	return (SkipNode *)_skip_search(list, key, NULL);
 }
 
 size_t

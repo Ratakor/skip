@@ -35,7 +35,6 @@ skip_prettyprint(SkipList *list)
 	SkipNode *node;
 	size_t i;
 
-	printf("%*s\n", 32, "str");
 	for (i = 0; i < skip_size(list); i++)
 		printf("------   ");
 	printf("--------\n");
