@@ -1,6 +1,6 @@
 Skip
 ====
-A C99 implementation of [skip lists](https://wikipedia.org/wiki/Skip_list)
+A C99 and zig implementation of [skip lists](https://wikipedia.org/wiki/Skip_list)
 
 Usage
 -----
