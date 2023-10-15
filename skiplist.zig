@@ -157,7 +157,7 @@ pub fn SkipList(
             return total;
         }
 
-        pub fn search(self: *Self, key: u64) ?*Node {
+        pub fn search(self: *Self, key: K) ?*Node {
             const maybe_node = self.find(key, null);
             if (maybe_node) |node| {
                 if (compareFn(node.key, key).compare(.eq)) {
@@ -344,7 +344,7 @@ pub fn DoublySkipList(
             return total;
         }
 
-        pub fn search(self: *Self, key: u64) ?*Node {
+        pub fn search(self: *Self, key: K) ?*Node {
             const maybe_node = self.find(key, null);
             if (maybe_node) |node| {
                 if (compareFn(node.key, key).compare(.eq)) {
