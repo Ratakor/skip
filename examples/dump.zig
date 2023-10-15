@@ -1,6 +1,10 @@
 const std = @import("std");
-const SkipList = @import("../SkipList.zig").SkipList(u64);
+const SkipList = @import("skiplist.zig").EasySkipList(u64, u64, compare);
 const print = std.debug.print;
+
+fn compare(a: u64, b: u64) std.math.Order {
+    return std.math.order(a, b);
+}
 
 fn dump(list: SkipList) void {
     var lvl: usize = list.level - 1;
